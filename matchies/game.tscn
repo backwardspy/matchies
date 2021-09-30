@@ -11,7 +11,7 @@ scale = Vector2( 0.693333, 0.693333 )
 texture = ExtResource( 1 )
 
 [node name="board" parent="." instance=ExtResource( 2 )]
-position = Vector2( 371.985, 76.4142 )
+position = Vector2( 346, 42 )
 columns = 10
 rows = 8
 separation = 64

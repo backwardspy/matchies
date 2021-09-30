@@ -1,9 +1,14 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=3 format=2]
 
-[ext_resource path="res://ui/audio/rollover4.ogg" type="AudioStream" id=1]
+[ext_resource path="res://ui/audio/pop.ogg" type="AudioStream" id=1]
+[ext_resource path="res://ui/audio/rollover6.ogg" type="AudioStream" id=2]
 
 [node name="ui_audio" type="Node"]
 
-[node name="hover" type="AudioStreamPlayer" parent="."]
+[node name="swap" type="AudioStreamPlayer" parent="."]
+stream = ExtResource( 2 )
+bus = "UI"
+
+[node name="pop" type="AudioStreamPlayer" parent="."]
 stream = ExtResource( 1 )
 bus = "UI"

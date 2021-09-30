@@ -5,5 +5,6 @@
 [node name="tile" type="Node2D"]
 
 [node name="sprite" type="Sprite" parent="."]
+position = Vector2( 28, 28 )
 scale = Vector2( 0.6, 0.6 )
 texture = ExtResource( 1 )

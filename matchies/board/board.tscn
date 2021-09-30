@@ -5,6 +5,11 @@
 [node name="board" type="Node2D"]
 script = ExtResource( 1 )
 
+[node name="block_timer" type="Timer" parent="."]
+one_shot = true
+
 [node name="tiles" type="Node2D" parent="."]
 
-[node name="matchies" type="Node2D" parent="."]
+[node name="matchies" type="YSort" parent="."]
+
+[connection signal="timeout" from="block_timer" to="." method="_on_block_timer_timeout"]
