@@ -198,9 +198,6 @@ func settle_grid() -> void:
 				sequence += 1
 	
 	spawn_new_matchies(sequence)
-	# wait for grid to settle then fill the spaces with new matchies
-#	block_timer.start(Matchie.SWAP_ANIM_DURATION / 2)
-#	action_queue.append("spawn_new_matchies")
 
 func pull_matchie_down(i: int, j: int, sequence: int) -> bool:
 	# given a free space (i, j), try to find a matchie above to place in this slot.
@@ -254,10 +251,8 @@ func find_vertical_matches() -> Array:
 	
 	var matches := Array()
 	
-	# used to skip checking tiles when a match is found
-	var skip := 0
-	
 	for i in columns:
+		var skip := 0
 		for j in range(rows - 1, 1, -1):
 			if skip > 0:
 				skip -= 1
@@ -268,7 +263,7 @@ func find_vertical_matches() -> Array:
 			if match_length >= 3:
 				matches.append(Match.new(Vector2(i, j), match_length, MatchDirection.UP))
 			
-			# we can skip remaining matched pieces, since we've already found the longest option
+			# we can skip any remaining matched pieces, since we've already found the longest option
 			skip = match_length - 1
 	
 	return matches
@@ -279,9 +274,9 @@ func find_horizontal_matches() -> Array:
 	var matches := Array()
 	
 	# used to skip checking tiles when a match is found
-	var skip := 0
 	
 	for j in rows:
+		var skip := 0
 		for i in range(columns - 1, 1, -1):
 			if skip > 0:
 				skip -= 1

@@ -78,7 +78,7 @@ func pop(sequence: int = 0) -> void:
 	# expand & fade out the matchie, then disappear.
 	# sequence delays the transition for a rippling effect.
 	
-	var delay := sequence * 0.05
+	var delay := sequence * 0.1
 	
 	tween.interpolate_property(
 		sprite, "scale",
