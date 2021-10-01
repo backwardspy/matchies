@@ -37,6 +37,7 @@ default_bus_layout="res://audio_bus.tres"
 [autoload]
 
 UIAudio="*res://ui/ui_audio.tscn"
+ScoreManager="*res://scoring/score_manager.gd"
 
 [input]
 

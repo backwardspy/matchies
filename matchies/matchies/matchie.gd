@@ -74,25 +74,33 @@ func slide(to: Vector2, fade_in: bool = false, sequence: int = 0) -> void:
 		)
 	tween.start()
 
-func pop(sequence: int = 0) -> void:
+func pop(pop_target: Vector2, sequence: int = 0) -> void:
 	# expand & fade out the matchie, then disappear.
 	# sequence delays the transition for a rippling effect.
 	
 	var delay := sequence * 0.1
 	
 	tween.interpolate_property(
+		sprite, "global_position",
+		sprite.global_position, pop_target + Vector2(0, sequence * 60),
+		POP_ANIM_DURATION * 2,
+		Tween.TRANS_CUBIC, Tween.EASE_OUT,
+		delay
+	)
+	tween.interpolate_property(
 		sprite, "scale",
-		sprite.scale, Vector2(2, 2),
-		POP_ANIM_DURATION,
+		sprite.scale, sprite.scale * 3,
+		POP_ANIM_DURATION * 2,
 		Tween.TRANS_LINEAR, Tween.EASE_OUT,
 		delay
 	)
 	tween.interpolate_property(
 		self, "modulate",
 		Color(1, 1, 1, 1), Color(1, 1, 1, 0),
-		POP_ANIM_DURATION,
+		POP_ANIM_DURATION * 3,
 		Tween.TRANS_LINEAR, Tween.EASE_OUT,
 		delay
 	)
 	tween.interpolate_callback(UIAudio.get_node("pop"), delay, "play")
+	tween.interpolate_callback(self, delay + POP_ANIM_DURATION * 4, "queue_free")
 	tween.start()

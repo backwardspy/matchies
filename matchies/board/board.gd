@@ -13,13 +13,20 @@ export (int) var rows: int
 export (int) var separation: int
 
 var matchie_grid := Array()
+var tiles_grid := Array()
 var user_is_dragging := false
 var drag_start_pos := Vector2(-1, -1)
 var action_queue := Array()
 
+# when true, check_for_matches will undo the last move if there are no matches
+var undo_if_no_matches := false
+var last_match_from: Vector2
+var last_match_to: Vector2
+
 onready var tiles := $tiles
 onready var matchies := $matchies
 onready var block_timer := $block_timer
+onready var pop_target := $pop_target
 
 class Match:
 	var start: Vector2
@@ -81,7 +88,7 @@ func end_drag(end_pos: Vector2) -> void:
 	# finishes a drag action on a grid position
 	
 	if end_pos.x >= 0 and end_pos.y >= 0 and end_pos != drag_start_pos:
-		perform_swap(drag_start_pos, end_pos)
+		swap_and_check_matches(drag_start_pos, end_pos)
 	
 	user_is_dragging = false
 	drag_start_pos = Vector2(-1, -1)
@@ -99,14 +106,6 @@ func is_in_bounds(check: Vector2) -> bool:
 	)
 
 func perform_swap(from: Vector2, to: Vector2) -> void:
-	# swaps two matchies and queues up a match check
-	
-	if (
-		from.x < 0 or to.x < 0 or from.x >= columns or to.x >= columns or
-		from.y < 0 or to.y < 0 or from.y >= rows or to.y >= rows
-	):
-		return
-	
 	var from_matchie: Matchie = matchie_grid[from.x][from.y]
 	var to_matchie: Matchie = matchie_grid[to.x][to.y]
 	
@@ -120,6 +119,22 @@ func perform_swap(from: Vector2, to: Vector2) -> void:
 		to_matchie.move(grid_to_local(from))
 	
 	UIAudio.get_node("swap").play()
+
+func swap_and_check_matches(from: Vector2, to: Vector2) -> void:
+	# swaps two matchies and queues up a match check
+	
+	if (
+		from.x < 0 or to.x < 0 or from.x >= columns or to.x >= columns or
+		from.y < 0 or to.y < 0 or from.y >= rows or to.y >= rows
+	):
+		return
+	
+	perform_swap(from, to)
+	
+	# signal that this match should be undone if there are no matches
+	last_match_from = from
+	last_match_to = to
+	undo_if_no_matches = true
 	
 	# queue up a match check once the swap is mostly done
 	block_timer.start(Matchie.SWAP_ANIM_DURATION / 2)
@@ -130,6 +145,7 @@ func populate_grid() -> void:
 	
 	for i in columns:
 		matchie_grid.append(Array())
+		tiles_grid.append(Array())
 		for j in rows:
 			# make a new matchie and put it into the board grid
 			var matchie: Matchie = matchie_scene.instance()
@@ -149,6 +165,7 @@ func populate_grid() -> void:
 			
 			# add a corresponding background tile
 			var tile: Node2D = tile_scene.instance()
+			tiles_grid[i].append(tile)
 			tile.position = matchie.position
 			tiles.add_child(tile)
 
@@ -157,7 +174,7 @@ func has_match_at_position(i: int, j: int) -> bool:
 	
 	return horizontal_match_length(i, j) >= 3 or vertical_match_length(i, j) >= 3
 
-func clear_match(m: Match) -> void:
+func clear_match(m: Match, sequence: int) -> void:
 	# removes a matched group of matchies from the grid
 	
 	var direction := Vector2(-1, 0) if m.direction == MatchDirection.LEFT else Vector2(0, -1)
@@ -166,8 +183,17 @@ func clear_match(m: Match) -> void:
 		
 		var matchie: Matchie = matchie_grid[pos.x][pos.y]
 		if matchie:
-			matchie.pop(i)
+			matchie.pop(pop_target.global_position, sequence)
 			matchie_grid[pos.x][pos.y] = null
+			
+			sequence += 1
+
+func undo_last_match() -> void:
+	if not undo_if_no_matches:
+		return
+	
+	undo_if_no_matches = false
+	perform_swap(last_match_to, last_match_from)
 
 func check_for_matches() -> void:
 	# find all matches on the board and clears them, then settles the grid.
@@ -175,10 +201,27 @@ func check_for_matches() -> void:
 	var matches := find_all_matches()
 	
 	if not matches:
+		if undo_if_no_matches:
+			undo_last_match()
 		return
 	
+	undo_if_no_matches = false
+	
+	var sequence := 0
 	for m in matches:
-		clear_match(m)
+		clear_match(m, sequence)
+		sequence += m.length
+		
+		match m.length:
+			3: ScoreManager.add_triplet()
+			4: ScoreManager.add_quadruplet()
+			5: ScoreManager.add_quintuplet()
+			_: push_error("unsupported match length %" % m.length)
+		
+		var dir := Vector2(-1, 0) if m.direction == MatchDirection.LEFT else Vector2(0, -1)
+		for i in m.length:
+			var pos: Vector2 = m.start + dir * i
+			tiles_grid[pos.x][pos.y].get_node("score_particles").emitting = true
 	
 	# wait for matches to clear, then settle the grid
 	block_timer.start(Matchie.POP_ANIM_DURATION)
